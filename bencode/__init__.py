@@ -10,6 +10,7 @@
 
 # Written by Petru Paler
 
+from bencode.BTL import BTFailure
 from bencode.exceptions import BencodeDecodeError
 
 import sys
