@@ -10,7 +10,9 @@
 
 # Written by Petru Paler
 
-from BTL import BTFailure
+from bencode.exceptions import BencodeDecodeError
+
+import sys
 
 
 def decode_int(x, f):
@@ -65,12 +67,10 @@ def bdecode(x):
     try:
         r, l = decode_func[x[0]](x, 0)
     except (IndexError, KeyError, ValueError):
-        raise BTFailure("not a valid bencoded string")
+        raise BencodeDecodeError("not a valid bencoded string")
     if l != len(x):
-        raise BTFailure("invalid bencoded value (data after valid prefix)")
+        raise BencodeDecodeError("invalid bencoded value (data after valid prefix)")
     return r
-
-from types import StringType, IntType, LongType, DictType, ListType, TupleType
 
 
 class Bencached(object):
@@ -103,7 +103,7 @@ def encode_list(x, r):
 
 def encode_dict(x,r):
     r.append('d')
-    ilist = x.items()
+    ilist = list(x.items())
     ilist.sort()
     for k, v in ilist:
         r.extend((str(len(k)), ':', k))
@@ -112,12 +112,22 @@ def encode_dict(x,r):
 
 encode_func = {}
 encode_func[Bencached] = encode_bencached
-encode_func[IntType] = encode_int
-encode_func[LongType] = encode_int
-encode_func[StringType] = encode_string
-encode_func[ListType] = encode_list
-encode_func[TupleType] = encode_list
-encode_func[DictType] = encode_dict
+
+if sys.version_info[0] == 2:
+    from types import DictType, IntType, ListType, LongType, StringType, TupleType
+
+    encode_func[DictType] = encode_dict
+    encode_func[IntType] = encode_int
+    encode_func[ListType] = encode_list
+    encode_func[LongType] = encode_int
+    encode_func[StringType] = encode_string
+    encode_func[TupleType] = encode_list
+else:
+    encode_func[dict] = encode_dict
+    encode_func[int] = encode_int
+    encode_func[list] = encode_list
+    encode_func[str] = encode_string
+    encode_func[tuple] = encode_list
 
 try:
     from types import BooleanType
