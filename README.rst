@@ -56,4 +56,4 @@ API
 
 ``bencode.decode(value)``
 
-    Decode bencode formatted string ``value``
+    Decode bencode formatted string ``value``.
