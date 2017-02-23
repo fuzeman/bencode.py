@@ -5,17 +5,10 @@
 
 """bencode.py - setup script."""
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 setup(
-    name="bencode.py",
-    version="1.1.0",
-    packages=find_packages(),
-
-    author="Dean Gardiner",
-    author_email="me@dgardiner.net",
-    description="BitTorrent bencode module with Python 3+ compatibility.",
-    license="BitTorrent Open Source License",
-    keywords="bittorrent bencode bdecode"
+    setup_requires=['pbr>=1.9', 'setuptools>=17.1'],
+    pbr=True,
 )
