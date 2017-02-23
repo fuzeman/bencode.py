@@ -10,7 +10,7 @@ bencode.py
 .. image:: https://img.shields.io/coveralls/fuzeman/bencode.py/master.svg?style=flat-square
    :target: https://coveralls.io/github/fuzeman/bencode.py
 
-BitTorrent bencode module with Python 3+ compatibility, forked from the bencode__ package by Thomas Rampelberg.
+Simple bencode parser (for Python 2, Python 3 and PyPy), forked from the bencode__ package by Thomas Rampelberg.
 
 __ https://pypi.python.org/pypi/bencode
 
