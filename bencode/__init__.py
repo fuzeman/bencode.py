@@ -90,7 +90,7 @@ def decode_dict(x, f):
     r, f = {}, f + 1
 
     while x[f : f+1] != b'e':
-        k, f = decode_string(x, f)
+        k, f = decode_string(x, f, force_decode_utf8=True)
         r[k], f = decode_func[x[f : f+1]](x, f)
 
     return r, f + 1
