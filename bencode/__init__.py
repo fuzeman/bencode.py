@@ -12,6 +12,8 @@
 
 """bencode.py - bencode encoder + decoder."""
 
+from collections import deque
+
 from bencode.BTL import BTFailure
 from bencode.exceptions import BencodeDecodeError
 
@@ -29,35 +31,56 @@ __all__ = (
 
 def decode_int(x, f):
     f += 1
-    newf = x.index('e', f)
+    newf = x.index(b'e', f)
     n = int(x[f:newf])
 
-    if x[f] == '-':
-        if x[f + 1] == '0':
+    if x[f : f+1] == b'-':
+        if x[f+1 : f+2] == b'0':
             raise ValueError
-    elif x[f] == '0' and newf != f + 1:
+    elif x[f : f+1] == b'0' and newf != f + 1:
         raise ValueError
 
     return n, newf + 1
 
 
-def decode_string(x, f):
-    colon = x.index(':', f)
+def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
+    """
+        decode torrent bencoded 'string' in x starting at f
+
+        An attempt is made to convert the string to a python string from utf-8.
+        However, both string and non-string binary data is intermixed in the
+        torrent bencoding standard. So we have to guess whether the byte
+        sequence is a string or just binary data. We make this guess by trying
+        to decode (from utf-8), and if that fails, assuming it is binary data.
+        There are some instances where the data SHOULD be a string though.
+        You can check enforce this by setting force_decode_utf8 to True. If the
+        decoding from utf-8 fails, an UnidcodeDecodeError is raised. Similarly,
+        if you know it should not be a string, you can skip the decoding
+        attempt by setting try_decode_utf8=False.
+    """
+    colon = x.index(b':', f)
     n = int(x[f:colon])
 
-    if x[f] == '0' and colon != f + 1:
+    if x[f : f+1] == b'0' and colon != f + 1:
         raise ValueError
 
     colon += 1
+    s = x[colon:colon + n]
+    if try_decode_utf8:
+        try:
+            s = s.decode('utf-8')
+        except UnicodeDecodeError as e:
+            if force_decode_utf8:
+                raise
 
-    return x[colon:colon + n], colon + n
+    return s, colon + n
 
 
 def decode_list(x, f):
     r, f = [], f + 1
 
-    while x[f] != 'e':
-        v, f = decode_func[x[f]](x, f)
+    while x[f : f+1] != b'e':
+        v, f = decode_func[x[f : f+1]](x, f)
         r.append(v)
 
     return r, f + 1
@@ -66,28 +89,28 @@ def decode_list(x, f):
 def decode_dict(x, f):
     r, f = {}, f + 1
 
-    while x[f] != 'e':
+    while x[f : f+1] != b'e':
         k, f = decode_string(x, f)
-        r[k], f = decode_func[x[f]](x, f)
+        r[k], f = decode_func[x[f : f+1]](x, f)
 
     return r, f + 1
 
 
 # noinspection PyDictCreation
 decode_func = {}
-decode_func['l'] = decode_list
-decode_func['d'] = decode_dict
-decode_func['i'] = decode_int
-decode_func['0'] = decode_string
-decode_func['1'] = decode_string
-decode_func['2'] = decode_string
-decode_func['3'] = decode_string
-decode_func['4'] = decode_string
-decode_func['5'] = decode_string
-decode_func['6'] = decode_string
-decode_func['7'] = decode_string
-decode_func['8'] = decode_string
-decode_func['9'] = decode_string
+decode_func[b'l'] = decode_list
+decode_func[b'd'] = decode_dict
+decode_func[b'i'] = decode_int
+decode_func[b'0'] = decode_string
+decode_func[b'1'] = decode_string
+decode_func[b'2'] = decode_string
+decode_func[b'3'] = decode_string
+decode_func[b'4'] = decode_string
+decode_func[b'5'] = decode_string
+decode_func[b'6'] = decode_string
+decode_func[b'7'] = decode_string
+decode_func[b'8'] = decode_string
+decode_func[b'9'] = decode_string
 
 
 def bdecode(value):
@@ -101,8 +124,8 @@ def bdecode(value):
     :rtype: object
     """
     try:
-        r, l = decode_func[value[0]](value, 0)
-    except (IndexError, KeyError, ValueError):
+        r, l = decode_func[value[0:1]](value, 0)
+    except (IndexError, KeyError, TypeError, ValueError):
         raise BencodeDecodeError("not a valid bencoded string")
 
     if l != len(value):
@@ -123,7 +146,7 @@ def encode_bencached(x, r):
 
 
 def encode_int(x, r):
-    r.extend(('i', str(x), 'e'))
+    r.extend((b'i', str(x).encode('utf-8'), b'e'))
 
 
 def encode_bool(x, r):
@@ -134,28 +157,34 @@ def encode_bool(x, r):
 
 
 def encode_string(x, r):
-    r.extend((str(len(x)), ':', x))
+    s = x.encode('utf-8')
+    r.extend((str(len(s)).encode('utf-8'), b':', s))
+
+
+def encode_bytes(x, r):
+    r.extend((str(len(x)).encode('utf-8'), b':', x))
 
 
 def encode_list(x, r):
-    r.append('l')
+    r.append(b'l')
 
     for i in x:
         encode_func[type(i)](i, r)
 
-    r.append('e')
+    r.append(b'e')
 
 
 def encode_dict(x, r):
-    r.append('d')
+    r.append(b'd')
     ilist = list(x.items())
     ilist.sort()
 
     for k, v in ilist:
-        r.extend((str(len(k)), ':', k))
+        k = k.encode('utf-8')
+        r.extend((str(len(k)).encode('utf-8'), b':', k))
         encode_func[type(v)](v, r)
 
-    r.append('e')
+    r.append(b'e')
 
 
 # noinspection PyDictCreation
@@ -184,6 +213,7 @@ else:
     encode_func[list] = encode_list
     encode_func[str] = encode_string
     encode_func[tuple] = encode_list
+    encode_func[bytes] = encode_bytes
 
 
 def bencode(value):
@@ -196,9 +226,9 @@ def bencode(value):
     :return: Bencode formatted string
     :rtype: str
     """
-    r = []
+    r = deque() # makes more sense for something with lots of appends
     encode_func[type(value)](value, r)
-    return ''.join(r)
+    return b''.join(r)
 
 
 # Method proxies (for compatibility with other libraries)

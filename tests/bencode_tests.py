@@ -17,20 +17,20 @@ class KnownValues(unittest.TestCase):
     """
 
     knownValues = (
-        (0, 'i0e'),
-        (1, 'i1e'),
-        (10, 'i10e'),
-        (42, 'i42e'),
-        (-42, 'i-42e'),
-        (True, 'i1e'),
-        (False, 'i0e'),
-        ('spam', '4:spam'),
-        ('parrot sketch', '13:parrot sketch'),
-        (['parrot sketch', 42], 'l13:parrot sketchi42ee'),
+        (0, 'i0e'.encode('utf-8')),
+        (1, 'i1e'.encode('utf-8')),
+        (10, 'i10e'.encode('utf-8')),
+        (42, 'i42e'.encode('utf-8')),
+        (-42, 'i-42e'.encode('utf-8')),
+        (True, 'i1e'.encode('utf-8')),
+        (False, 'i0e'.encode('utf-8')),
+        ('spam', '4:spam'.encode('utf-8')),
+        ('parrot sketch', '13:parrot sketch'.encode('utf-8')),
+        (['parrot sketch', 42], 'l13:parrot sketchi42ee'.encode('utf-8')),
         ({
             'foo': 42,
             'bar': 'spam'
-        }, 'd3:bar4:spam3:fooi42ee'),
+        }, 'd3:bar4:spam3:fooi42ee'.encode('utf-8')),
     )
 
     def testBencodeKnownValues(self):
@@ -89,11 +89,11 @@ class Dictionaries(unittest.TestCase):
         """Ensure the keys of a dictionary are sorted before being encoded."""
         encoded = bencode({'zoo': 42, 'bar': 'spam'})
 
-        self.failUnless(encoded.index('zoo') > encoded.index('bar'))
+        self.assertTrue(encoded.index(b'zoo') > encoded.index(b'bar'))
 
     def testNestedDictionary(self):
         """Test the handling of nested dicts."""
         self.assertEqual(
             bencode({'foo': 42, 'bar': {'sketch': 'parrot', 'foobar': 23}}),
-            'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'
+            'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'.encode('utf-8')
         )
