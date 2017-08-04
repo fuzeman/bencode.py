@@ -252,3 +252,38 @@ def bencode(value):
 # Method proxies (for compatibility with other libraries)
 decode = bdecode
 encode = bencode
+
+def bread(fd):
+    """
+        return bdecoded data from filename, file, or file-like object
+
+        if fd is a bytes/string or pathlib.Path-like object, it is opened and
+        read, otherwise .read() is used. if read() not available, exception
+        raised.
+    """
+    if isinstance(fd, (bytes, str)):
+        with open(fd, 'rb') as fd:
+            return bdecode(fd.read())
+    elif isinstance(fd, (pathlib.Path, pathlib.PurePath)):
+        with open(str(fd), 'rb') as fd:
+            return bdecode(fd.read())
+    else:
+        return bdecode(fd.read())
+
+def bwrite(data, fd):
+    """
+        write data in bencoded form to filename, file, or file-like object
+
+        if fd is bytes/string or pathlib.Path-like object, it is opened and
+        written to, otherwise .write() is used. if write() is not available,
+        exception raised.
+    """
+    if isinstance(fd, (bytes, str)):
+        with open(fd, 'wb') as fd:
+            fd.write(bencode(data))
+    elif isinstance(fd, (pathlib.Path, pathlib.PurePath)):
+        with open(str(fd), 'wb') as fd:
+            fd.write(bencode(data))
+    else:
+        fd.write(bencode(data))
+
