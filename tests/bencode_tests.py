@@ -3,6 +3,8 @@
 
 """bencode.py tests."""
 
+from collections import OrderedDict
+
 from bencode import BTFailure, bencode, bdecode
 
 import unittest
@@ -31,6 +33,10 @@ class KnownValues(unittest.TestCase):
             'foo': 42,
             'bar': 'spam'
         }, 'd3:bar4:spam3:fooi42ee'.encode('utf-8')),
+        (OrderedDict((
+            ('bar', 'spam'),
+            ('foo', 42)
+        )), 'd3:bar4:spam3:fooi42ee'.encode('utf-8')),
     )
 
     def testBencodeKnownValues(self):

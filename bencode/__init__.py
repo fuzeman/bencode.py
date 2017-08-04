@@ -12,7 +12,7 @@
 
 """bencode.py - bencode encoder + decoder."""
 
-from collections import deque
+from collections import deque, OrderedDict
 
 from bencode.BTL import BTFailure
 from bencode.exceptions import BencodeDecodeError
@@ -86,12 +86,29 @@ def decode_list(x, f):
     return r, f + 1
 
 
-def decode_dict(x, f):
-    r, f = {}, f + 1
+def decode_dict(x, f, force_sort=True):
+    """
+        decode bencoded data to an OrderedDict
+
+        The BitTorrent standard states that:
+            Keys must be strings and appear in sorted order (sorted as raw
+            strings, not alphanumerics)
+        - http://www.bittorrent.org/beps/bep_0003.html
+
+        Therefore, this function will force the keys to be strings (decoded
+        from utf-8), and by default the keys are (re)sorted after reading.
+        Set force_sort to False to keep the order of the dictionary as
+        represented in x, as many other encoders and decoders do not force this
+        property.
+    """
+    r, f = OrderedDict(), f + 1
 
     while x[f : f+1] != b'e':
         k, f = decode_string(x, f, force_decode_utf8=True)
         r[k], f = decode_func[x[f : f+1]](x, f)
+
+    if force_sort:
+        r = OrderedDict(sorted(r.items()))
 
     return r, f + 1
 
@@ -209,6 +226,7 @@ if sys.version_info[0] == 2:
 else:
     encode_func[bool] = encode_bool
     encode_func[dict] = encode_dict
+    encode_func[OrderedDict] = encode_dict
     encode_func[int] = encode_int
     encode_func[list] = encode_list
     encode_func[str] = encode_string
