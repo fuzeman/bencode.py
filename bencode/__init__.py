@@ -12,7 +12,7 @@
 
 """bencode.py - bencode encoder + decoder."""
 
-import path
+import pathlib
 
 from collections import deque, OrderedDict
 
