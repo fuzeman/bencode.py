@@ -12,6 +12,8 @@
 
 """bencode.py - bencode encoder + decoder."""
 
+import path
+
 from collections import deque, OrderedDict
 
 from bencode.BTL import BTFailure
