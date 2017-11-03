@@ -26,6 +26,8 @@ __all__ = (
     'BencodeDecodeError',
     'bencode',
     'bdecode',
+    'bread',
+    'bwrite',
     'encode',
     'decode'
 )
