@@ -1,9 +1,11 @@
 /.cache
 /.coverage
+/.idea
 /.tox
 /build
 /dist
 /htmlcov
+/tests/.tmp
 
 *.egg-info
 *.iml
