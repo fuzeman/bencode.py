@@ -45,34 +45,33 @@ def decode_int(x, f):
     newf = x.index(b'e', f)
     n = int(x[f:newf])
 
-    if x[f : f+1] == b'-':
-        if x[f+1 : f+2] == b'0':
+    if x[f:f + 1] == b'-':
+        if x[f + 1:f + 2] == b'0':
             raise ValueError
-    elif x[f : f+1] == b'0' and newf != f + 1:
+    elif x[f:f + 1] == b'0' and newf != f + 1:
         raise ValueError
 
     return n, newf + 1
 
 
 def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
-    """
-        decode torrent bencoded 'string' in x starting at f
+    """Decode torrent bencoded 'string' in x starting at f.
 
-        An attempt is made to convert the string to a python string from utf-8.
-        However, both string and non-string binary data is intermixed in the
-        torrent bencoding standard. So we have to guess whether the byte
-        sequence is a string or just binary data. We make this guess by trying
-        to decode (from utf-8), and if that fails, assuming it is binary data.
-        There are some instances where the data SHOULD be a string though.
-        You can check enforce this by setting force_decode_utf8 to True. If the
-        decoding from utf-8 fails, an UnidcodeDecodeError is raised. Similarly,
-        if you know it should not be a string, you can skip the decoding
-        attempt by setting try_decode_utf8=False.
+    An attempt is made to convert the string to a python string from utf-8.
+    However, both string and non-string binary data is intermixed in the
+    torrent bencoding standard. So we have to guess whether the byte
+    sequence is a string or just binary data. We make this guess by trying
+    to decode (from utf-8), and if that fails, assuming it is binary data.
+    There are some instances where the data SHOULD be a string though.
+    You can check enforce this by setting force_decode_utf8 to True. If the
+    decoding from utf-8 fails, an UnidcodeDecodeError is raised. Similarly,
+    if you know it should not be a string, you can skip the decoding
+    attempt by setting try_decode_utf8=False.
     """
     colon = x.index(b':', f)
     n = int(x[f:colon])
 
-    if x[f : f+1] == b'0' and colon != f + 1:
+    if x[f:f + 1] == b'0' and colon != f + 1:
         raise ValueError
 
     colon += 1
@@ -80,7 +79,7 @@ def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
     if try_decode_utf8:
         try:
             s = s.decode('utf-8')
-        except UnicodeDecodeError as e:
+        except UnicodeDecodeError:
             if force_decode_utf8:
                 raise
 
@@ -90,8 +89,8 @@ def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
 def decode_list(x, f):
     r, f = [], f + 1
 
-    while x[f : f+1] != b'e':
-        v, f = decode_func[x[f : f+1]](x, f)
+    while x[f:f + 1] != b'e':
+        v, f = decode_func[x[f:f + 1]](x, f)
         r.append(v)
 
     return r, f + 1
@@ -108,25 +107,24 @@ def decode_dict_py26(x, f):
 
 
 def decode_dict(x, f, force_sort=True):
-    """
-        decode bencoded data to an OrderedDict
+    """Decode bencoded data to an OrderedDict.
 
-        The BitTorrent standard states that:
-            Keys must be strings and appear in sorted order (sorted as raw
-            strings, not alphanumerics)
-        - http://www.bittorrent.org/beps/bep_0003.html
+    The BitTorrent standard states that:
+        Keys must be strings and appear in sorted order (sorted as raw
+        strings, not alphanumerics)
+    - http://www.bittorrent.org/beps/bep_0003.html
 
-        Therefore, this function will force the keys to be strings (decoded
-        from utf-8), and by default the keys are (re)sorted after reading.
-        Set force_sort to False to keep the order of the dictionary as
-        represented in x, as many other encoders and decoders do not force this
-        property.
+    Therefore, this function will force the keys to be strings (decoded
+    from utf-8), and by default the keys are (re)sorted after reading.
+    Set force_sort to False to keep the order of the dictionary as
+    represented in x, as many other encoders and decoders do not force this
+    property.
     """
     r, f = OrderedDict(), f + 1
 
-    while x[f : f+1] != b'e':
+    while x[f:f + 1] != b'e':
         k, f = decode_string(x, f, force_decode_utf8=True)
-        r[k], f = decode_func[x[f : f+1]](x, f)
+        r[k], f = decode_func[x[f:f + 1]](x, f)
 
     if force_sort:
         r = OrderedDict(sorted(r.items()))
@@ -274,8 +272,12 @@ def bencode(value):
     :return: Bencode formatted string
     :rtype: str
     """
-    r = deque() # makes more sense for something with lots of appends
+    r = deque()  # makes more sense for something with lots of appends
+
+    # Encode provided value
     encode_func[type(value)](value, r)
+
+    # Join parts
     return b''.join(r)
 
 
@@ -283,13 +285,13 @@ def bencode(value):
 decode = bdecode
 encode = bencode
 
-def bread(fd):
-    """
-        return bdecoded data from filename, file, or file-like object
 
-        if fd is a bytes/string or pathlib.Path-like object, it is opened and
-        read, otherwise .read() is used. if read() not available, exception
-        raised.
+def bread(fd):
+    """Return bdecoded data from filename, file, or file-like object.
+
+    if fd is a bytes/string or pathlib.Path-like object, it is opened and
+    read, otherwise .read() is used. if read() not available, exception
+    raised.
     """
     if isinstance(fd, (bytes, str)):
         with open(fd, 'rb') as fd:
@@ -300,13 +302,13 @@ def bread(fd):
     else:
         return bdecode(fd.read())
 
-def bwrite(data, fd):
-    """
-        write data in bencoded form to filename, file, or file-like object
 
-        if fd is bytes/string or pathlib.Path-like object, it is opened and
-        written to, otherwise .write() is used. if write() is not available,
-        exception raised.
+def bwrite(data, fd):
+    """Write data in bencoded form to filename, file, or file-like object.
+
+    if fd is bytes/string or pathlib.Path-like object, it is opened and
+    written to, otherwise .write() is used. if write() is not available,
+    exception raised.
     """
     if isinstance(fd, (bytes, str)):
         with open(fd, 'wb') as fd:
@@ -316,4 +318,3 @@ def bwrite(data, fd):
             fd.write(bencode(data))
     else:
         fd.write(bencode(data))
-
