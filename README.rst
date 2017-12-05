@@ -57,3 +57,11 @@ API
 ``bencode.decode(value)``
 
     Decode bencode formatted string ``value``.
+
+``bencode.bread(fd)``
+
+    Read bencode formatted string from file or path ``fd``.
+
+``bencode.bwrite(data, fd)``
+
+    Write ``data`` as a bencode formatted string to file or path ``fd``.
