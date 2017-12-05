@@ -76,14 +76,15 @@ def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
 
     colon += 1
     s = x[colon:colon + n]
+
     if try_decode_utf8:
         try:
-            s = s.decode('utf-8')
+            return s.decode('utf-8'), colon + n
         except UnicodeDecodeError:
             if force_decode_utf8:
                 raise
 
-    return s, colon + n
+    return bytes(s), colon + n
 
 
 def decode_list(x, f):
@@ -196,13 +197,17 @@ def encode_bool(x, r):
         encode_int(0, r)
 
 
-def encode_string(x, r):
-    s = x.encode('utf-8')
-    r.extend((str(len(s)).encode('utf-8'), b':', s))
-
-
 def encode_bytes(x, r):
     r.extend((str(len(x)).encode('utf-8'), b':', x))
+
+
+def encode_string(x, r):
+    try:
+        s = x.encode('utf-8')
+    except UnicodeDecodeError:
+        return encode_bytes(x, r)
+
+    r.extend((str(len(s)).encode('utf-8'), b':', s))
 
 
 def encode_list(x, r):
