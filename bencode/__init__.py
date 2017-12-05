@@ -12,14 +12,21 @@
 
 """bencode.py - bencode encoder + decoder."""
 
-import pathlib
-
-from collections import deque, OrderedDict
-
 from bencode.BTL import BTFailure
 from bencode.exceptions import BencodeDecodeError
 
+from collections import deque
 import sys
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    OrderedDict = None
+
+try:
+    import pathlib
+except ImportError:
+    pathlib = None
 
 __all__ = (
     'BTFailure',
@@ -90,6 +97,16 @@ def decode_list(x, f):
     return r, f + 1
 
 
+def decode_dict_py26(x, f):
+    r, f = {}, f + 1
+
+    while x[f] != 'e':
+        k, f = decode_string(x, f)
+        r[k], f = decode_func[x[f]](x, f)
+
+    return r, f + 1
+
+
 def decode_dict(x, f, force_sort=True):
     """
         decode bencoded data to an OrderedDict
@@ -120,7 +137,6 @@ def decode_dict(x, f, force_sort=True):
 # noinspection PyDictCreation
 decode_func = {}
 decode_func[b'l'] = decode_list
-decode_func[b'd'] = decode_dict
 decode_func[b'i'] = decode_int
 decode_func[b'0'] = decode_string
 decode_func[b'1'] = decode_string
@@ -132,6 +148,11 @@ decode_func[b'6'] = decode_string
 decode_func[b'7'] = decode_string
 decode_func[b'8'] = decode_string
 decode_func[b'9'] = decode_string
+
+if sys.version_info[0] == 2 and sys.version_info[1] == 6:
+    decode_func[b'd'] = decode_dict_py26
+else:
+    decode_func[b'd'] = decode_dict
 
 
 def bdecode(value):
@@ -213,7 +234,7 @@ encode_func = {}
 encode_func[Bencached] = encode_bencached
 
 if sys.version_info[0] == 2:
-    from types import DictType, IntType, ListType, LongType, StringType, TupleType
+    from types import DictType, IntType, ListType, LongType, StringType, TupleType, UnicodeType
 
     encode_func[DictType] = encode_dict
     encode_func[IntType] = encode_int
@@ -221,16 +242,21 @@ if sys.version_info[0] == 2:
     encode_func[LongType] = encode_int
     encode_func[StringType] = encode_string
     encode_func[TupleType] = encode_list
+    encode_func[UnicodeType] = encode_string
+
+    if OrderedDict is not None:
+        encode_func[OrderedDict] = encode_dict
 
     try:
         from types import BooleanType
+
         encode_func[BooleanType] = encode_bool
     except ImportError:
         pass
 else:
+    encode_func[OrderedDict] = encode_dict
     encode_func[bool] = encode_bool
     encode_func[dict] = encode_dict
-    encode_func[OrderedDict] = encode_dict
     encode_func[int] = encode_int
     encode_func[list] = encode_list
     encode_func[str] = encode_string
@@ -268,7 +294,7 @@ def bread(fd):
     if isinstance(fd, (bytes, str)):
         with open(fd, 'rb') as fd:
             return bdecode(fd.read())
-    elif isinstance(fd, (pathlib.Path, pathlib.PurePath)):
+    elif pathlib is not None and isinstance(fd, (pathlib.Path, pathlib.PurePath)):
         with open(str(fd), 'rb') as fd:
             return bdecode(fd.read())
     else:
@@ -285,7 +311,7 @@ def bwrite(data, fd):
     if isinstance(fd, (bytes, str)):
         with open(fd, 'wb') as fd:
             fd.write(bencode(data))
-    elif isinstance(fd, (pathlib.Path, pathlib.PurePath)):
+    elif pathlib is not None and isinstance(fd, (pathlib.Path, pathlib.PurePath)):
         with open(str(fd), 'wb') as fd:
             fd.write(bencode(data))
     else:
