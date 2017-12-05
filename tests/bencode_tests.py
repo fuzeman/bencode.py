@@ -143,6 +143,22 @@ def test_dictionary_sorted():
 
 
 @pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
+def test_dictionary_unicode():
+    """Test the handling of unicode in dictionaries."""
+    encoded = bencode({u'foo': 42, 'bar': {u'sketch': u'parrot', 'foobar': 23}})
+
+    assert encoded == 'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'.encode('utf-8')
+
+
+@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
+def test_dictionary_unicode_py2():
+    """Test the handling of unicode in dictionaries."""
+    encoded = bencode({u'foo': 42, 'bar': {u'sketch': u'parrot', 'foobar': 23}})
+
+    assert encoded == 'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'
+
+
+@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_dictionary_nested():
     """Test the handling of nested dictionaries."""
     encoded = bencode({'foo': 42, 'bar': {'sketch': 'parrot', 'foobar': 23}})
