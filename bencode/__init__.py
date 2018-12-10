@@ -156,10 +156,10 @@ else:
 
 def bdecode(value):
     """
-    Decode bencode formatted string ``value``.
+    Decode bencode formatted byte string ``value``.
 
     :param value: Bencode formatted string
-    :type value: str
+    :type value: bytes
 
     :return: Decoded value
     :rtype: object
