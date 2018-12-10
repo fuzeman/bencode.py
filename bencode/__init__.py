@@ -159,10 +159,10 @@ def bdecode(value):
     Decode bencode formatted string ``value``.
 
     :param value: Bencode formatted string
-    :type value: str
+    :type value: bytes
 
     :return: Decoded value
-    :rtype: object
+    :rtype: dict
     """
     try:
         r, l = decode_func[value[0:1]](value, 0)
