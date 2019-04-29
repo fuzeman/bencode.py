@@ -21,7 +21,7 @@ import sys
 try:
     from typing import Dict, List, Tuple, Deque, Union, TextIO, BinaryIO, Any
 except ImportError:
-    Dict, List, Tuple, Deque, Union, TextIO, BinaryIO, Any = None
+    Dict = List = Tuple = Deque = Union = TextIO = BinaryIO = Any = None
 
 try:
     from collections import OrderedDict
