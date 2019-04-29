@@ -205,7 +205,7 @@ def encode_string(x, r):
     try:
         s = x.encode('utf-8')
     except UnicodeDecodeError:
-        return encode_bytes(x, r)
+        encode_bytes(x, r)
 
     r.extend((str(len(s)).encode('utf-8'), b':', s))
 
