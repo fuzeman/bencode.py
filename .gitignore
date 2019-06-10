@@ -10,3 +10,4 @@
 *.egg-info
 *.iml
 *.pyc
+/.eggs
