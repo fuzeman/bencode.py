@@ -15,50 +15,35 @@ except ImportError:
 
 
 VALUES = [
-    (0, 'i0e'),
-    (1, 'i1e'),
-    (10, 'i10e'),
-    (42, 'i42e'),
-    (-42, 'i-42e'),
-    (True, 'i1e'),
-    (False, 'i0e'),
-    ('spam', '4:spam'),
-    ('parrot sketch', '13:parrot sketch'),
-    (['parrot sketch', 42], 'l13:parrot sketchi42ee'),
-    ({'foo': 42, 'bar': 'spam'}, 'd3:bar4:spam3:fooi42ee')
+    (0, b'i0e'),
+    (1, b'i1e'),
+    (10, b'i10e'),
+    (42, b'i42e'),
+    (-42, b'i-42e'),
+    (True, b'i1e'),
+    (False, b'i0e'),
+    (b'spam', b'4:spam'),
+    (b'parrot sketch', b'13:parrot sketch'),
+    ([b'parrot sketch', 42], b'l13:parrot sketchi42ee'),
+    ({b'foo': 42, b'bar': b'spam'}, b'd3:bar4:spam3:fooi42ee')
 ]
 
 if OrderedDict is not None:
     VALUES.append((OrderedDict((
-        ('bar', 'spam'),
-        ('foo', 42)
-    )), 'd3:bar4:spam3:fooi42ee'))
+        (b'bar', b'spam'),
+        (b'foo', 42)
+    )), b'd3:bar4:spam3:fooi42ee'))
 
 
-@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_encode():
-    """Encode should give known result with known input."""
-    for plain, encoded in VALUES:
-        assert encoded.encode('utf-8') == bencode(plain)
-
-
-@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
-def test_encode_py2():
     """Encode should give known result with known input."""
     for plain, encoded in VALUES:
         assert encoded == bencode(plain)
 
 
-@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_encode_bencached():
     """Ensure Bencached objects can be encoded."""
     assert bencode([Bencached(bencode('test'))]) == b'l4:teste'
-
-
-@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
-def test_encode_bencached_py2():
-    """Ensure Bencached objects can be encoded."""
-    assert bencode([Bencached(bencode('test'))]) == 'l4:teste'
 
 
 def test_encode_bytes():
@@ -66,15 +51,7 @@ def test_encode_bytes():
     assert bencode(b'\x9c') == b'1:\x9c'
 
 
-@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_decode():
-    """Decode should give known result with known input."""
-    for plain, encoded in VALUES:
-        assert plain == bdecode(encoded.encode('utf-8'))
-
-
-@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
-def test_decode_py2():
     """Decode should give known result with known input."""
     for plain, encoded in VALUES:
         assert plain == bdecode(encoded)
@@ -85,15 +62,7 @@ def test_decode_bytes():
     assert bdecode(b'1:\x9c') == b'\x9c'
 
 
-@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_encode_roundtrip():
-    """Consecutive calls to decode and encode should deliver the original data again."""
-    for plain, encoded in VALUES:
-        assert encoded.encode('utf-8') == bencode(bdecode(encoded.encode('utf-8')))
-
-
-@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
-def test_encode_roundtrip_py2():
     """Consecutive calls to decode and encode should deliver the original data again."""
     for plain, encoded in VALUES:
         assert encoded == bencode(bdecode(encoded))
@@ -142,7 +111,6 @@ def test_dictionary_sorted():
     assert encoded.index(b'zoo') > encoded.index(b'bar')
 
 
-@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_dictionary_unicode():
     """Test the handling of unicode in dictionaries."""
     encoded = bencode({u'foo': 42, 'bar': {u'sketch': u'parrot', 'foobar': 23}})
@@ -150,25 +118,8 @@ def test_dictionary_unicode():
     assert encoded == 'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'.encode('utf-8')
 
 
-@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
-def test_dictionary_unicode_py2():
-    """Test the handling of unicode in dictionaries."""
-    encoded = bencode({u'foo': 42, 'bar': {u'sketch': u'parrot', 'foobar': 23}})
-
-    assert encoded == 'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'
-
-
-@pytest.mark.skipif(sys.version_info[0] < 3, reason="Requires: Python 3+")
 def test_dictionary_nested():
     """Test the handling of nested dictionaries."""
     encoded = bencode({'foo': 42, 'bar': {'sketch': 'parrot', 'foobar': 23}})
 
     assert encoded == 'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'.encode('utf-8')
-
-
-@pytest.mark.skipif(sys.version_info[0] != 2, reason="Requires: Python 2")
-def test_dictionary_nested_py2():
-    """Test the handling of nested dictionaries."""
-    encoded = bencode({'foo': 42, 'bar': {'sketch': 'parrot', 'foobar': 23}})
-
-    assert encoded == 'd3:bard6:foobari23e6:sketch6:parrote3:fooi42ee'

@@ -60,20 +60,9 @@ def decode_int(x, f):
     return n, newf + 1
 
 
-def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
-    # type: (bytes, int, bool, bool) -> Tuple[bytes, int]
+def decode_string(x, f):
+    # type: (bytes, int) -> Tuple[bytes, int]
     """Decode torrent bencoded 'string' in x starting at f.
-
-    An attempt is made to convert the string to a python string from utf-8.
-    However, both string and non-string binary data is intermixed in the
-    torrent bencoding standard. So we have to guess whether the byte
-    sequence is a string or just binary data. We make this guess by trying
-    to decode (from utf-8), and if that fails, assuming it is binary data.
-    There are some instances where the data SHOULD be a string though.
-    You can check enforce this by setting force_decode_utf8 to True. If the
-    decoding from utf-8 fails, an UnidcodeDecodeError is raised. Similarly,
-    if you know it should not be a string, you can skip the decoding
-    attempt by setting try_decode_utf8=False.
     """
     colon = x.index(b':', f)
     n = int(x[f:colon])
@@ -83,13 +72,6 @@ def decode_string(x, f, try_decode_utf8=True, force_decode_utf8=False):
 
     colon += 1
     s = x[colon:colon + n]
-
-    if try_decode_utf8:
-        try:
-            return s.decode('utf-8'), colon + n
-        except UnicodeDecodeError:
-            if force_decode_utf8:
-                raise
 
     return bytes(s), colon + n
 
@@ -135,7 +117,7 @@ def decode_dict(x, f, force_sort=True):
     r, f = OrderedDict(), f + 1
 
     while x[f:f + 1] != b'e':
-        k, f = decode_string(x, f, force_decode_utf8=True)
+        k, f = decode_string(x, f)
         r[k], f = decode_func[x[f:f + 1]](x, f)
 
     if force_sort:
@@ -219,13 +201,7 @@ def encode_bytes(x, r):
 
 def encode_string(x, r):
     # type: (str, Deque[bytes]) -> None
-    try:
-        s = x.encode('utf-8')
-    except UnicodeDecodeError:
-        encode_bytes(x, r)
-        return
-
-    r.extend((str(len(s)).encode('utf-8'), b':', s))
+    return encode_bytes(x.encode("UTF-8"), r)
 
 
 def encode_list(x, r):
@@ -241,12 +217,13 @@ def encode_list(x, r):
 def encode_dict(x, r):
     # type: (Dict, Deque[bytes]) -> None
     r.append(b'd')
-    ilist = list(x.items())
-    ilist.sort()
+
+    # force all keys to bytes, because str and bytes are incomparable
+    ilist = [(k if type(k) == type(b"") else k.encode("UTF-8"), v) for k, v in x.items()]
+    ilist.sort(key=lambda kv: kv[0])
 
     for k, v in ilist:
-        k = k.encode('utf-8')
-        r.extend((str(len(k)).encode('utf-8'), b':', k))
+        encode_func[type(k)](k, r)
         encode_func[type(v)](v, r)
 
     r.append(b'e')
@@ -263,7 +240,7 @@ if sys.version_info[0] == 2:
     encode_func[IntType] = encode_int
     encode_func[ListType] = encode_list
     encode_func[LongType] = encode_int
-    encode_func[StringType] = encode_string
+    encode_func[StringType] = encode_bytes
     encode_func[TupleType] = encode_list
     encode_func[UnicodeType] = encode_string
 
