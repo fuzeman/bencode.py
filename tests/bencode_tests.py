@@ -33,10 +33,17 @@ if OrderedDict is not None:
         (b'foo', 42)
     )), b'd3:bar4:spam3:fooi42ee'))
 
+ENCODE = VALUES
+
+DECODE = VALUES + [
+    (0, 'i0e'),
+    ([b'parrot sketch', 42], 'l13:parrot sketchi42ee'),
+]
+
 
 def test_encode():
     """Encode should give known result with known input."""
-    for plain, encoded in VALUES:
+    for plain, encoded in ENCODE:
         assert encoded == bencode(plain)
 
 
@@ -52,7 +59,7 @@ def test_encode_bytes():
 
 def test_decode():
     """Decode should give known result with known input."""
-    for plain, encoded in VALUES:
+    for plain, encoded in DECODE:
         assert plain == bdecode(encoded)
 
 
@@ -63,7 +70,7 @@ def test_decode_bytes():
 
 def test_encode_roundtrip():
     """Consecutive calls to decode and encode should deliver the original data again."""
-    for plain, encoded in VALUES:
+    for plain, encoded in ENCODE:
         assert encoded == bencode(bdecode(encoded))
 
 

@@ -146,6 +146,7 @@ def bdecode(value):
     :rtype: object
     """
     try:
+        value = to_binary(value)
         data, length = decode_func[value[0:1]](value, 0)
     except (IndexError, KeyError, TypeError, ValueError):
         raise BencodeDecodeError("not a valid bencoded string")
