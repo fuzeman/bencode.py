@@ -33,6 +33,9 @@ try:
 except ImportError:
     pathlib = None
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+
 __all__ = (
     'BTFailure',
     'BencodeDecodeError',
@@ -62,8 +65,7 @@ def decode_int(x, f):
 
 def decode_string(x, f):
     # type: (bytes, int) -> Tuple[bytes, int]
-    """Decode torrent bencoded 'string' in x starting at f.
-    """
+    """Decode torrent bencoded 'string' in x starting at f."""
     colon = x.index(b':', f)
     n = int(x[f:colon])
 
@@ -83,17 +85,6 @@ def decode_list(x, f):
     while x[f:f + 1] != b'e':
         v, f = decode_func[x[f:f + 1]](x, f)
         r.append(v)
-
-    return r, f + 1
-
-
-def decode_dict_py26(x, f):
-    # type: (bytes, int) -> Tuple[Dict[str, Any], int]
-    r, f = {}, f + 1
-
-    while x[f] != 'e':
-        k, f = decode_string(x, f)
-        r[k], f = decode_func[x[f]](x, f)
 
     return r, f + 1
 
@@ -140,11 +131,7 @@ decode_func[b'6'] = decode_string
 decode_func[b'7'] = decode_string
 decode_func[b'8'] = decode_string
 decode_func[b'9'] = decode_string
-
-if sys.version_info[0] == 2 and sys.version_info[1] == 6:
-    decode_func[b'd'] = decode_dict_py26
-else:
-    decode_func[b'd'] = decode_dict
+decode_func[b'd'] = decode_dict
 
 
 def bdecode(value):
@@ -159,14 +146,14 @@ def bdecode(value):
     :rtype: object
     """
     try:
-        r, l = decode_func[value[0:1]](value, 0)
+        data, length = decode_func[value[0:1]](value, 0)
     except (IndexError, KeyError, TypeError, ValueError):
         raise BencodeDecodeError("not a valid bencoded string")
 
-    if l != len(value):
+    if length != len(value):
         raise BencodeDecodeError("invalid bencoded value (data after valid prefix)")
 
-    return r
+    return data
 
 
 class Bencached(object):
@@ -219,7 +206,7 @@ def encode_dict(x, r):
     r.append(b'd')
 
     # force all keys to bytes, because str and bytes are incomparable
-    ilist = [(k if type(k) == type(b"") else k.encode("UTF-8"), v) for k, v in x.items()]
+    ilist = [(to_binary(k), v) for k, v in x.items()]
     ilist.sort(key=lambda kv: kv[0])
 
     for k, v in ilist:
@@ -229,11 +216,35 @@ def encode_dict(x, r):
     r.append(b'e')
 
 
+def is_binary(s):
+    if PY3:
+        return isinstance(s, bytes)
+
+    return isinstance(s, str)
+
+
+def is_text(s):
+    if PY3:
+        return isinstance(s, str)
+
+    return isinstance(s, unicode)  # noqa: F821
+
+
+def to_binary(s):
+    if is_binary(s):
+        return s
+
+    if is_text(s):
+        return s.encode('utf-8', 'strict')
+
+    raise TypeError("expected binary or text (found %s)" % type(s))
+
+
 # noinspection PyDictCreation
 encode_func = {}
 encode_func[Bencached] = encode_bencached
 
-if sys.version_info[0] == 2:
+if PY2:
     from types import DictType, IntType, ListType, LongType, StringType, TupleType, UnicodeType
 
     encode_func[DictType] = encode_dict
@@ -307,8 +318,10 @@ def bread(fd):
         return bdecode(fd.read())
 
 
-def bwrite(data, fd):
-    # type: (Union[Tuple, List, OrderedDict, Dict, bool, int, str, bytes], Union[bytes, str, pathlib.Path, pathlib.PurePath, TextIO, BinaryIO]) -> None
+def bwrite(data,  # type: Union[Tuple, List, OrderedDict, Dict, bool, int, str, bytes]
+           fd     # type: Union[bytes, str, pathlib.Path, pathlib.PurePath, TextIO, BinaryIO]
+           ):
+    # type: (...) -> None
     """Write data in bencoded form to filename, file, or file-like object.
 
     if fd is bytes/string or pathlib.Path-like object, it is opened and

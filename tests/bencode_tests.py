@@ -6,7 +6,6 @@
 from bencode import Bencached, BTFailure, bencode, bdecode
 
 import pytest
-import sys
 
 try:
     from collections import OrderedDict
