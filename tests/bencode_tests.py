@@ -3,7 +3,7 @@
 
 """bencode.py tests."""
 
-from bencode import Bencached, BTFailure, bencode, bdecode
+from bencode import Bencached, BencodeDecodeError, bencode, bdecode
 
 import pytest
 
@@ -91,22 +91,22 @@ def test_decode_parameter():
     # self.assertRaises(BTFailure, bdecode, 0)
     # self.assertRaises(BTFailure, bdecode, None)
     # self.assertRaises(BTFailure, bdecode, 1.0)
-    with pytest.raises(BTFailure):
+    with pytest.raises(BencodeDecodeError):
         bdecode([1, 2])
 
-    with pytest.raises(BTFailure):
+    with pytest.raises(BencodeDecodeError):
         bdecode({'foo': 'bar'})
 
 
 def test_decode_errors():
     """Illegally formatted strings should raise an exception when decoded."""
-    with pytest.raises(BTFailure):
+    with pytest.raises(BencodeDecodeError):
         bdecode("foo")
 
-    with pytest.raises(BTFailure):
+    with pytest.raises(BencodeDecodeError):
         bdecode("x:foo")
 
-    with pytest.raises(BTFailure):
+    with pytest.raises(BencodeDecodeError):
         bdecode("x42e")
 
 
