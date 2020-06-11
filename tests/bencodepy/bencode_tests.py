@@ -3,7 +3,7 @@
 
 """bencode.py tests."""
 
-from bencode import Bencached, BencodeDecodeError, bencode, bdecode
+from bencodepy import Bencached, BencodeDecodeError, bencode, bdecode
 
 import pytest
 
@@ -66,6 +66,17 @@ def test_decode():
 def test_decode_bytes():
     """Ensure bytes can be decoded."""
     assert bdecode(b'1:\x9c') == b'\x9c'
+
+
+def test_decode_dict():
+    """Ensure bytes can be decoded."""
+    value = bdecode('d5:title7:Examplee')
+
+    # Ensure a dict is returned
+    assert isinstance(value, dict)
+
+    # Validate items
+    assert value == {'title': 'Example'}
 
 
 def test_encode_roundtrip():

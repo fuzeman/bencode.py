@@ -22,29 +22,170 @@ Usage
 
 .. code-block:: python
 
-    import bencode
+    >>> import bencodepy
 
-    bencode.encode({'title': 'Example'})
-    # 'd5:title7:Examplee'
+    >>> bencodepy.encode({'title': 'Example'})
+    b'd5:title7:Examplee'
 
-    bencode.encode(12)
-    # 'i12e'
+    >>> bencodepy.encode(12)
+    b'i12e'
 
 **Decode:**
 
 .. code-block:: python
 
-    import bencode
+    >>> import bencodepy
 
-    bencode.decode('d5:title7:Examplee')
-    # {'title': 'Example'}
+    >>> bencodepy.decode('d5:title7:Examplee')
+    {b'title': b'Example'}
 
-    bencode.decode('i12e')
-    # 12
+    >>> bencodepy.decode('i12e')
+    12
+
+**Decode to UTF-8:**
+
+.. code-block:: python
+
+    >>> import bencodepy
+
+    >>> bc = bencodepy.Bencode(
+        encoding='utf-8'
+    )
+
+    >>> bc.decode('d5:title7:Examplee')
+    {'title': 'Example'}
+
+:code:`bencode`
+************************************************
+*(legacy, backwards-compatible package)*
+
+This package will continue to be provided for backwards-compatibility, but upgrading to ``bencodepy`` is recommended for more reliable decoding results.
+
+Under-the-hood this just provides proxies to a ``Bencode`` instance created with:
+
+.. code-block:: python
+
+    Bencode(
+        encoding='utf-8',
+        encoding_fallback='value',
+        dict_ordered=True,
+        dict_ordered_sort=True
+    )
+
+**Encode:**
+
+.. code-block:: python
+
+    >>> import bencode
+
+    >>> bencode.encode({'title': 'Example'})
+    'd5:title7:Examplee'
+
+    >>> bencode.encode(12)
+    'i12e'
+
+**Decode:**
+
+.. code-block:: python
+
+    >>> import bencode
+
+    >>> bencode.decode('d5:title7:Examplee')
+    OrderedDict([(u'title', u'Example')])
+
+    >>> bencode.decode('i12e')
+    12
 
 
 API
 ---
+
+``bencodepy.Bencode(encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False)``
+
+    Create instance
+
+    - encoding
+       Encoding to decode strings with (or ``None`` for binary)
+    - encoding_fallback
+       Fallback to binary when decoding fails on the specified string types.
+
+       - ``key`` - dictionary keys
+       - ``value`` - values
+       - ``all`` - always fallback to binary
+       - ``None`` - always raise decoding errors
+    - dict_ordered
+       Use ``OrderedDict``
+    - dict_ordered_sort
+       Ensure ``OrderedDict`` is sorted
+
+    Methods:
+
+    - ``decode(value)``
+        Decode bencode string ``value``.
+
+    - ``encode(value)``
+        Encode ``value`` into a bencode string.
+
+    - ``read(fd)``
+        Decode bencode from file or path ``fd``.
+
+    - ``write(data, fd)``
+        Encode ``data`` to file or path ``fd``.
+
+``bencodepy.BencodeDecoder(encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False)``
+
+    Create decoder
+
+    - encoding
+       Encoding to decode strings with (or ``None`` for binary)
+    - encoding_fallback
+       Fallback to binary when decoding fails on the specified string types.
+
+       - ``key`` - dictionary keys
+       - ``value`` - values
+       - ``all`` - always fallback to binary
+       - ``None`` - always raise decoding errors
+    - dict_ordered
+       Use ``OrderedDict``
+    - dict_ordered_sort
+       Ensure ``OrderedDict`` is sorted
+
+    Methods:
+
+    - ``decode(value)``
+        Decode bencode string ``value``.
+
+``bencodepy.BencodeEncoder()``
+
+    Create encoder
+
+    Methods:
+
+    - ``encode(value)``
+        Encode ``value`` into a bencode string.
+
+``bencodepy.bencode(value)``
+
+``bencodepy.encode(value)``
+
+    Encode ``value`` into a bencode string with the default encoder.
+
+``bencodepy.bdecode(value)``
+
+``bencodepy.decode(value)``
+
+    Decode bencode string ``value`` with the default decoder.
+
+``bencodepy.bread(fd)``
+
+    Decode bencode from file or path ``fd`` with the default decoder.
+
+``bencodepy.bwrite(data, fd)``
+
+    Encode ``data`` to file or path ``fd`` with the default encoder.
+
+:code:`bencode`
+************************************************
 
 ``bencode.bencode(value)``
 

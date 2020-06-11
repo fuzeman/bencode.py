@@ -12,8 +12,8 @@
 
 """bencode.py - bencode encoder + decoder."""
 
-from bencode.common import *
-from bencode.compat import *
+from bencodepy.common import Bencached
+from bencodepy.compat import *
 
 from collections import deque
 

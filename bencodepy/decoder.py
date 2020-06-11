@@ -12,8 +12,10 @@
 
 """bencode.py - bencode encoder + decoder."""
 
-from bencode.compat import *
-from bencode.exceptions import BencodeDecodeError
+from bencodepy.compat import *
+from bencodepy.exceptions import BencodeDecodeError
+
+from collections import OrderedDict
 
 try:
     from typing import Dict, List, Tuple, Deque, Union, TextIO, BinaryIO, Any
@@ -21,18 +23,37 @@ except ImportError:
     Dict = List = Tuple = Deque = Union = TextIO = BinaryIO = Any = None
 
 try:
-    from collections import OrderedDict
-except ImportError:
-    OrderedDict = None
-
-try:
     import pathlib
 except ImportError:
     pathlib = None
 
+ENCODING_FALLBACK_TYPES = ('key', 'value')
+
 
 class BencodeDecoder(object):
-    def __init__(self):
+    def __init__(self, encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False):
+        self.encoding = encoding
+        self.dict_ordered = dict_ordered
+        self.dict_ordered_sort = dict_ordered_sort
+
+        if dict_ordered_sort and not dict_ordered:
+            raise ValueError(
+                'Invalid value for "dict_ordered_sort" (requires "dict_ordered" to be enabled)'
+            )
+
+        # Parse encoding fallback
+        if encoding_fallback is not None and encoding_fallback not in ENCODING_FALLBACK_TYPES + ('all',):
+            raise ValueError(
+                'Invalid value for "encoding_fallback" (expected "all", "keys", "values" or None)'
+            )
+
+        if encoding_fallback == 'all':
+            self.encoding_fallback = ENCODING_FALLBACK_TYPES
+        elif encoding_fallback is not None:
+            self.encoding_fallback = (encoding_fallback,)
+        else:
+            self.encoding_fallback = tuple()
+
         # noinspection PyDictCreation
         self.decode_func = {}
         self.decode_func[b'l'] = self.decode_list
@@ -85,7 +106,7 @@ class BencodeDecoder(object):
 
         return n, newf + 1
 
-    def decode_string(self, x, f):
+    def decode_string(self, x, f, kind='value'):
         # type: (bytes, int) -> Tuple[bytes, int]
         """Decode torrent bencoded 'string' in x starting at f."""
         colon = x.index(b':', f)
@@ -97,8 +118,14 @@ class BencodeDecoder(object):
         colon += 1
         s = x[colon:colon + n]
 
-        return bytes(s), colon + n
+        if self.encoding:
+            try:
+                return s.decode(self.encoding), colon + n
+            except UnicodeDecodeError:
+                if kind not in self.encoding_fallback:
+                    raise
 
+        return bytes(s), colon + n
 
     def decode_list(self, x, f):
         # type: (bytes, int) -> Tuple[List, int]
@@ -110,29 +137,22 @@ class BencodeDecoder(object):
 
         return r, f + 1
 
-    def decode_dict(self, x, f, force_sort=True):
-        # type: (bytes, int, bool) -> Tuple[OrderedDict[str, Any], int]
-        """Decode bencoded data to an OrderedDict.
+    def decode_dict(self, x, f):
+        # type: (bytes, int) -> Tuple[OrderedDict[str, Any], int]
+        """Decode bencoded dictionary."""
 
-        The BitTorrent standard states that:
-            Keys must be strings and appear in sorted order (sorted as raw
-            strings, not alphanumerics)
-        - http://www.bittorrent.org/beps/bep_0003.html
+        f += 1
 
-        Therefore, this function will force the keys to be strings (decoded
-        from utf-8), and by default the keys are (re)sorted after reading.
-        Set force_sort to False to keep the order of the dictionary as
-        represented in x, as many other encoders and decoders do not force this
-        property.
-        """
-
-        r, f = OrderedDict(), f + 1
+        if self.dict_ordered:
+            r = OrderedDict()
+        else:
+            r = {}
 
         while x[f:f + 1] != b'e':
-            k, f = self.decode_string(x, f)
+            k, f = self.decode_string(x, f, kind='key')
             r[k], f = self.decode_func[x[f:f + 1]](x, f)
 
-        if force_sort:
+        if self.dict_ordered_sort:
             r = OrderedDict(sorted(r.items()))
 
         return r, f + 1

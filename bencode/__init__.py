@@ -12,22 +12,14 @@
 
 """bencode.py - bencode encoder + decoder."""
 
-from bencode.common import Bencached
-from bencode.decoder import BencodeDecoder
-from bencode.encoder import BencodeEncoder
+from bencode.BTL import BTFailure
 from bencode.exceptions import BencodeDecodeError
-
-try:
-    import pathlib
-except ImportError:
-    pathlib = None
+from bencodepy import Bencached, Bencode
 
 __all__ = (
+    'BTFailure',
     'Bencached',
-    'Bencode',
-    'BencodeDecoder',
     'BencodeDecodeError',
-    'BencodeEncoder',
     'bencode',
     'bdecode',
     'bread',
@@ -37,87 +29,17 @@ __all__ = (
 )
 
 
-class Bencode(object):
-    def __init__(self):
-        self.decoder = BencodeDecoder()
-        self.encoder = BencodeEncoder()
+DEFAULT = Bencode(
+    encoding='utf-8',
+    encoding_fallback='value',
+    dict_ordered=True,
+    dict_ordered_sort=True
+)
 
-    def decode(self, value):
-        return self.decoder.decode(value)
+bdecode = DEFAULT.decode
+bencode = DEFAULT.encode
+bread = DEFAULT.read
+bwrite = DEFAULT.write
 
-    def encode(self, value):
-        return self.encoder.encode(value)
-
-
-DEFAULT = Bencode()
-
-
-def bencode(value):
-    # type: (Union[Tuple, List, OrderedDict, Dict, bool, int, str, bytes]) -> bytes
-    """
-    Encode ``value`` into the bencode format.
-
-    :param value: Value
-    :type value: object
-
-    :return: Bencode formatted string
-    :rtype: str
-    """
-    return DEFAULT.encode(value)
-
-
-def bdecode(value):
-    # type: (bytes) -> Union[Tuple, List, OrderedDict, bool, int, str, bytes]
-    """
-    Decode bencode formatted byte string ``value``.
-
-    :param value: Bencode formatted string
-    :type value: bytes
-
-    :return: Decoded value
-    :rtype: object
-    """
-    return DEFAULT.decode(value)
-
-
-def bread(fd):
-    # type: (Union[bytes, str, pathlib.Path, pathlib.PurePath, TextIO, BinaryIO]) -> bytes
-    """Return bdecoded data from filename, file, or file-like object.
-
-    if fd is a bytes/string or pathlib.Path-like object, it is opened and
-    read, otherwise .read() is used. if read() not available, exception
-    raised.
-    """
-    if isinstance(fd, (bytes, str)):
-        with open(fd, 'rb') as fd:
-            return bdecode(fd.read())
-    elif pathlib is not None and isinstance(fd, (pathlib.Path, pathlib.PurePath)):
-        with open(str(fd), 'rb') as fd:
-            return bdecode(fd.read())
-    else:
-        return bdecode(fd.read())
-
-
-def bwrite(data,  # type: Union[Tuple, List, OrderedDict, Dict, bool, int, str, bytes]
-           fd     # type: Union[bytes, str, pathlib.Path, pathlib.PurePath, TextIO, BinaryIO]
-           ):
-    # type: (...) -> None
-    """Write data in bencoded form to filename, file, or file-like object.
-
-    if fd is bytes/string or pathlib.Path-like object, it is opened and
-    written to, otherwise .write() is used. if write() is not available,
-    exception raised.
-    """
-    if isinstance(fd, (bytes, str)):
-        with open(fd, 'wb') as fd:
-            fd.write(bencode(data))
-    elif pathlib is not None and isinstance(fd, (pathlib.Path, pathlib.PurePath)):
-        with open(str(fd), 'wb') as fd:
-            fd.write(bencode(data))
-    else:
-        fd.write(bencode(data))
-
-
-# Compatibility Proxies
-encode = bencode
 decode = bdecode
+encode = bencode
