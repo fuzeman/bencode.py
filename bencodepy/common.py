@@ -1,3 +1,6 @@
+"""bencode.py - common."""
+
+
 class Bencached(object):
     __slots__ = ['bencoded']
 

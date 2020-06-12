@@ -10,11 +10,10 @@
 
 # Written by Petru Paler
 
-"""bencode.py - bencode encoder + decoder."""
+"""bencode.py - bencode decoder."""
 
-from bencodepy.compat import *
+from bencodepy.compat import to_binary
 from bencodepy.exceptions import BencodeDecodeError
-
 from collections import OrderedDict
 
 try:

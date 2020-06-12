@@ -1,1 +1,1 @@
-"""bencode.py - tests."""
+"""bencode.py - bencode tests."""

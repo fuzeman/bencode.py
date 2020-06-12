@@ -4,7 +4,6 @@
 """bencode.py tests."""
 
 from bencodepy import Bencached, BencodeDecodeError, bencode, bdecode
-
 import pytest
 
 try:
@@ -76,7 +75,7 @@ def test_decode_dict():
     assert isinstance(value, dict)
 
     # Validate items
-    assert value == {'title': 'Example'}
+    assert value == {b'title': b'Example'}
 
 
 def test_encode_roundtrip():

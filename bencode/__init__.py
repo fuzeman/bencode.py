@@ -14,6 +14,7 @@
 
 from bencode.BTL import BTFailure
 from bencode.exceptions import BencodeDecodeError
+
 from bencodepy import Bencached, Bencode
 
 __all__ = (

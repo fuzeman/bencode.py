@@ -4,7 +4,6 @@
 """bencode.py - file tests."""
 
 from bencodepy import bread, bwrite
-
 import os
 import pytest
 import sys

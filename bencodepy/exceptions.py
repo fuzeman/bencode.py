@@ -1,4 +1,4 @@
-"""bencode.py - encoder + decode exceptions."""
+"""bencode.py - exceptions."""
 
 
 class BencodeDecodeError(Exception):

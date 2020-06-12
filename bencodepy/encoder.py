@@ -10,11 +10,10 @@
 
 # Written by Petru Paler
 
-"""bencode.py - bencode encoder + decoder."""
+"""bencode.py - bencode encoder."""
 
 from bencodepy.common import Bencached
-from bencodepy.compat import *
-
+from bencodepy.compat import PY2, to_binary
 from collections import deque
 
 try:
