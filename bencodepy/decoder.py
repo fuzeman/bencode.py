@@ -43,7 +43,7 @@ class BencodeDecoder(object):
         # Parse encoding fallback
         if encoding_fallback is not None and encoding_fallback not in ENCODING_FALLBACK_TYPES + ('all',):
             raise ValueError(
-                'Invalid value for "encoding_fallback" (expected "all", "keys", "values" or None)'
+                'Invalid value for "encoding_fallback" (expected "all", "key", "value" or None)'
             )
 
         if encoding_fallback == 'all':
