@@ -1,6 +1,0 @@
-exclude *
-recursive-include bencode *.py
-recursive-include tests fixtures\* *.py
-include AUTHORS LICENSE
-include requirements*.txt .coveragerc .gitignore *.cfg *.in *.ini *.py *.rst *.yml
-global-exclude *.iml *.pyc

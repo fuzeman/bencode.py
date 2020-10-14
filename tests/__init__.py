@@ -1,1 +1,0 @@
-"""bencode.py - tests."""
