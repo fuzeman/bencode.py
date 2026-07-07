@@ -100,7 +100,7 @@ Under-the-hood this just provides proxies to a ``Bencode`` instance created with
 API
 ---
 
-``bencodepy.Bencode(encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False)``
+``bencodepy.Bencode(encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False, max_depth=DEFAULT_MAX_DEPTH)``
 
     Create instance
 
@@ -117,6 +117,8 @@ API
        Use ``OrderedDict``
     - dict_ordered_sort
        Ensure ``OrderedDict`` is sorted
+    - max_depth
+       Maximum structure depth before raising a ``BencodeDecodeError``.
 
     Methods:
 
@@ -132,7 +134,7 @@ API
     - ``write(data, fd)``
         Encode ``data`` to file or path ``fd``.
 
-``bencodepy.BencodeDecoder(encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False)``
+``bencodepy.BencodeDecoder(encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False, max_depth=DEFAULT_MAX_DEPTH)``
 
     Create decoder
 
@@ -149,6 +151,8 @@ API
        Use ``OrderedDict``
     - dict_ordered_sort
        Ensure ``OrderedDict`` is sorted
+    - max_depth
+       Maximum structure depth before raising a ``BencodeDecodeError``.
 
     Methods:
 

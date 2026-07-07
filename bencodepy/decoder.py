@@ -27,13 +27,15 @@ except ImportError:
     pathlib = None
 
 ENCODING_FALLBACK_TYPES = ('key', 'value')
+DEFAULT_MAX_DEPTH = 100
 
 
 class BencodeDecoder(object):
-    def __init__(self, encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False):
+    def __init__(self, encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False, max_depth=DEFAULT_MAX_DEPTH):
         self.encoding = encoding
         self.dict_ordered = dict_ordered
         self.dict_ordered_sort = dict_ordered_sort
+        self.max_depth = max_depth
 
         if dict_ordered_sort and not dict_ordered:
             raise ValueError(
@@ -85,13 +87,16 @@ class BencodeDecoder(object):
             data, length = self.decode_func[value[0:1]](value, 0)
         except (IndexError, KeyError, TypeError, ValueError):
             raise BencodeDecodeError("not a valid bencoded string")
+        except RecursionError:
+            raise BencodeDecodeError("exceeded maximum depth")
+
 
         if length != len(value):
             raise BencodeDecodeError("invalid bencoded value (data after valid prefix)")
 
         return data
 
-    def decode_int(self, x, f):
+    def decode_int(self, x, f, **kwargs):
         # type: (bytes, int) -> Tuple[int, int]
         f += 1
         newf = x.index(b'e', f)
@@ -105,7 +110,7 @@ class BencodeDecoder(object):
 
         return n, newf + 1
 
-    def decode_string(self, x, f, kind='value'):
+    def decode_string(self, x, f, kind='value', **kwargs):
         # type: (bytes, int) -> Tuple[bytes, int]
         """Decode torrent bencoded 'string' in x starting at f."""
         colon = x.index(b':', f)
@@ -126,19 +131,29 @@ class BencodeDecoder(object):
 
         return bytes(s), colon + n
 
-    def decode_list(self, x, f):
+    def decode_list(self, x, f, **kwargs):
         # type: (bytes, int) -> Tuple[List, int]
         r, f = [], f + 1
 
+        depth = kwargs.get('depth', 0)
+
+        if depth > self.max_depth:
+            raise BencodeDecodeError("exceeded maximum depth")
+
         while x[f:f + 1] != b'e':
-            v, f = self.decode_func[x[f:f + 1]](x, f)
+            v, f = self.decode_func[x[f:f + 1]](x, f, depth=depth + 1)
             r.append(v)
 
         return r, f + 1
 
-    def decode_dict(self, x, f):
+    def decode_dict(self, x, f, **kwargs):
         # type: (bytes, int) -> Tuple[OrderedDict[str, Any], int]
         """Decode bencoded dictionary."""
+
+        depth = kwargs.get('depth', 0)
+
+        if depth > self.max_depth:
+            raise BencodeDecodeError("exceeded maximum depth")
 
         f += 1
 
@@ -149,7 +164,7 @@ class BencodeDecoder(object):
 
         while x[f:f + 1] != b'e':
             k, f = self.decode_string(x, f, kind='key')
-            r[k], f = self.decode_func[x[f:f + 1]](x, f)
+            r[k], f = self.decode_func[x[f:f + 1]](x, f, depth=depth + 1)
 
         if self.dict_ordered_sort:
             r = OrderedDict(sorted(r.items()))

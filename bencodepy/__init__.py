@@ -13,7 +13,7 @@
 """bencode.py - bencode encoder + decoder."""
 
 from bencodepy.common import Bencached
-from bencodepy.decoder import BencodeDecoder
+from bencodepy.decoder import DEFAULT_MAX_DEPTH, BencodeDecoder
 from bencodepy.encoder import BencodeEncoder
 from bencodepy.exceptions import BencodeDecodeError
 
@@ -48,12 +48,13 @@ __all__ = (
 
 
 class Bencode(object):
-    def __init__(self, encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False):
+    def __init__(self, encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False, max_depth=DEFAULT_MAX_DEPTH):
         self.decoder = BencodeDecoder(
             encoding=encoding,
             encoding_fallback=encoding_fallback,
             dict_ordered=dict_ordered,
-            dict_ordered_sort=dict_ordered_sort
+            dict_ordered_sort=dict_ordered_sort,
+            max_depth=max_depth
         )
 
         self.encoder = BencodeEncoder()

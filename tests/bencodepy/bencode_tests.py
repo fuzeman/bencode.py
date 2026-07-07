@@ -3,7 +3,8 @@
 
 """bencode.py tests."""
 
-from bencodepy import Bencached, BencodeDecodeError, bencode, bdecode
+from bencodepy import Bencode, Bencached, BencodeDecodeError, bencode, bdecode
+import os
 import pytest
 
 try:
@@ -11,6 +12,7 @@ try:
 except ImportError:
     OrderedDict = None
 
+FIXTURE_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 VALUES = [
     (0, b'i0e'),
@@ -76,6 +78,24 @@ def test_decode_dict():
 
     # Validate items
     assert value == {b'title': b'Example'}
+
+
+def test_decode_max_depth():
+    """Ensure max depth is respected on nested inputs."""
+    with open(os.path.join(FIXTURE_DIR, 'nesting_500'), 'rb') as fp:
+        with pytest.raises(BencodeDecodeError):
+            bdecode(fp.read())
+
+
+def test_decode_recursion_error():
+    """Ensure max depth is respected on nested inputs."""
+    bencode = Bencode(
+        max_depth=10000
+    )
+
+    with open(os.path.join(FIXTURE_DIR, 'nesting_1500'), 'rb') as fp:
+        with pytest.raises(BencodeDecodeError):
+            bencode.decode(fp.read())
 
 
 def test_encode_roundtrip():

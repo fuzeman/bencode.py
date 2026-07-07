@@ -3,7 +3,7 @@
 
 """bencode.py - file tests."""
 
-from bencodepy import bread, bwrite
+from bencodepy import Bencode, BencodeDecodeError, bread, bwrite
 import os
 import pytest
 import sys
@@ -39,6 +39,24 @@ def test_read_pathlib():
     data = bread(Path(FIXTURE_DIR, 'alpha'))
 
     assert data == {b'foo': 42, b'bar': {b'sketch': b'parrot', b'foobar': 23}}
+
+
+def test_read_max_depth():
+    """Ensure max depth is respected on nested inputs."""
+    with open(os.path.join(FIXTURE_DIR, 'nesting_500'), 'rb') as fp:
+        with pytest.raises(BencodeDecodeError):
+            bread(fp)
+
+
+def test_read_recursion_error():
+    """Ensure max depth is respected on nested inputs."""
+    bencode = Bencode(
+        max_depth=10000
+    )
+
+    with open(os.path.join(FIXTURE_DIR, 'nesting_1500'), 'rb') as fp:
+        with pytest.raises(BencodeDecodeError):
+            bencode.read(fp)
 
 
 def test_write_file():
