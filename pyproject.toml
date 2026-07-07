@@ -1,0 +1,31 @@
+[project]
+name = "bencode.py"
+version = "4.0.0"
+description = "Simple bencode parser (for Python 2, Python 3 and PyPy)"
+readme = "README.rst"
+authors = [
+    { name = "Dean Gardiner", email = "me@dgardiner.net" }
+]
+license = {text = "BitTorrent Open Source License"}
+keywords = [
+    "bittorrent",
+    "bencode",
+    "bdecode"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+repository = "https://github.com/fuzeman/bencode.py"
+
+[tool.setuptools]
+packages = ["bencode", "bencodepy"]
