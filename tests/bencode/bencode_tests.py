@@ -146,6 +146,13 @@ def test_decode_errors():
         bdecode("x42e")
 
 
+@pytest.mark.parametrize('data', [b'i+5e', b'i1_0e', b'i03e', b'1_0:0123456789'])
+def test_decode_non_canonical(data):
+    """Legacy module must also reject non-canonical integers/lengths."""
+    with pytest.raises(BTFailure):
+        bdecode(data)
+
+
 def test_dictionary_sorted():
     """Ensure the keys of a dictionary are sorted before being encoded."""
     encoded = bencode({'zoo': 42, 'bar': 'spam'})

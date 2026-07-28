@@ -140,6 +140,45 @@ def test_decode_errors():
         bdecode("x42e")
 
 
+NON_CANONICAL = [
+    b'i03e',            # leading zero
+    b'i-0e',            # negative zero
+    b'i00e',
+    b'i+5e',            # explicit plus sign
+    b'i+00e',
+    b'i 5 e',           # surrounding whitespace
+    b'i\t5\te',
+    b'i5\ne',
+    b'i1_0e',           # PEP-515 underscore
+    b'i-1_0e',
+    b'01:a',            # non-canonical length prefix
+    b'1_0:0123456789',
+]
+
+CANONICAL = [
+    (0, b'i0e'),
+    (-5, b'i-5e'),
+    (42, b'i42e'),
+    (b'', b'0:'),
+    (b'abc', b'3:abc'),
+    (b'0123456789', b'10:0123456789'),
+]
+
+
+@pytest.mark.parametrize('data', NON_CANONICAL)
+def test_decode_non_canonical(data):
+    """Non-canonical integers/lengths must be rejected, not int()-coerced."""
+    with pytest.raises(BencodeDecodeError):
+        bdecode(data)
+
+
+@pytest.mark.parametrize('value,data', CANONICAL)
+def test_decode_canonical(value, data):
+    """Canonical integers and lengths still decode and round-trip."""
+    assert bdecode(data) == value
+    assert bencode(value) == data
+
+
 def test_dictionary_sorted():
     """Ensure the keys of a dictionary are sorted before being encoded."""
     encoded = bencode({'zoo': 42, 'bar': 'spam'})
