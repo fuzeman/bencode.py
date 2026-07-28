@@ -30,6 +30,16 @@ ENCODING_FALLBACK_TYPES = ('key', 'value')
 DEFAULT_MAX_DEPTH = 100
 
 
+def parse_canonical_int(s, allow_negative):
+    # type: (bytes, bool) -> int
+    # int() accepts '+', whitespace and PEP-515 underscores, none of which are
+    # canonical bencode; require the slice to round-trip through str().
+    n = int(s)
+    if str(n).encode() != s or (n < 0 and not allow_negative):
+        raise ValueError
+    return n
+
+
 class BencodeDecoder(object):
     def __init__(self, encoding=None, encoding_fallback=None, dict_ordered=False, dict_ordered_sort=False, max_depth=DEFAULT_MAX_DEPTH):
         self.encoding = encoding
@@ -100,13 +110,7 @@ class BencodeDecoder(object):
         # type: (bytes, int) -> Tuple[int, int]
         f += 1
         newf = x.index(b'e', f)
-        n = int(x[f:newf])
-
-        if x[f:f + 1] == b'-':
-            if x[f + 1:f + 2] == b'0':
-                raise ValueError
-        elif x[f:f + 1] == b'0' and newf != f + 1:
-            raise ValueError
+        n = parse_canonical_int(x[f:newf], allow_negative=True)
 
         return n, newf + 1
 
@@ -114,10 +118,7 @@ class BencodeDecoder(object):
         # type: (bytes, int) -> Tuple[bytes, int]
         """Decode torrent bencoded 'string' in x starting at f."""
         colon = x.index(b':', f)
-        n = int(x[f:colon])
-
-        if x[f:f + 1] == b'0' and colon != f + 1:
-            raise ValueError
+        n = parse_canonical_int(x[f:colon], allow_negative=False)
 
         colon += 1
         s = x[colon:colon + n]
